@@ -1,0 +1,45 @@
+version: '3'
+services:
+  web-server:
+    container_name: ${NGINX_HOST}
+    image: nginx:1.18-alpine
+    volumes:
+      - ${WWW_PATH}:/var/www/html:rw
+      - ./nginx/templates:/etc/nginx/templates
+    ports:
+      - "8080:80"
+    environment:
+      - SERVER_NAME=${NGINX_HOST}
+      - PHP_FPM=${PHP_HOST}
+    restart: always
+    depends_on:
+      - php-fpm
+      - mysqldb
+    networks:
+      - glpi-network
+  php-fpm:
+    container_name: ${PHP_HOST}
+    build: ./php-image
+    restart: always
+    volumes:
+      - ${WWW_PATH}:/var/www/html:rw
+      - ./php/php.ini:/usr/local/etc/php/conf.d/php.ini
+    networks:
+      - glpi-network
+  mysqldb:
+    container_name: ${MYSQL_HOST}
+    image: mariadb:10-focal
+    restart: always
+    environment:
+        - MYSQL_DATABASE=${MYSQL_DATABASE}
+        - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+        - MYSQL_USER=${MYSQL_USER}
+        - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    volumes:
+        - ${DB_PATH}:/var/lib/mysql
+    networks:
+      - glpi-network
+networks:
+  glpi-network:
+    driver: bridge
+      
